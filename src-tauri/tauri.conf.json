@@ -17,6 +17,10 @@
 			},
 			"os": {
 				"all": true
+			},
+			"window": {
+				"close": true,
+				"requestUserAttention": true
 			}
 		},
 		"bundle": {

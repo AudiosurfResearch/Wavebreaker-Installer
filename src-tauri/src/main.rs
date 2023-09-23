@@ -2,14 +2,18 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::Deserialize;
-use std::collections::HashMap;
-use steamlocate::SteamDir;
+use std::{collections::HashMap, path};
+use steamlocate::{SteamApp, SteamDir};
 #[derive(Deserialize)]
 struct LibraryFolders(HashMap<String, String>);
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_audiosurf_path])
+        .invoke_handler(tauri::generate_handler![
+            get_audiosurf_path,
+            is_valid_audiosurf_folder,
+            install
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -17,8 +21,29 @@ fn main() {
 #[tauri::command]
 fn get_audiosurf_path() -> Result<String, String> {
     let mut steamdir = SteamDir::locate().unwrap();
-    match steamdir.app(&4000) {
-        Some(app) => Ok(app.path.to_str().unwrap().to_string().into()),
-        None => Err("Audiosurf not found".into()),
+    let apps: &HashMap<u32, Option<SteamApp>> = steamdir.apps();
+    for (_, app) in apps {
+        if let Some(app) = app {
+            if app.app_id == 12900 {
+                return Ok(app.path.to_str().unwrap().to_string());
+            }
+        }
     }
+    Err(
+        "Couldn't locate Audiosurf! Make sure you own the game on Steam and have it installed!"
+            .into(),
+    )
+}
+
+#[tauri::command]
+fn is_valid_audiosurf_folder(path: String) -> bool {
+    return path::Path::new(&path).join("engine\\channels").exists();
+}
+
+#[tauri::command]
+fn install(path: String) -> Result<(), String> {
+    if !is_valid_audiosurf_folder(path) {
+        return Err("Invalid Audiosurf folder!".into());
+    }
+    return Ok(());
 }

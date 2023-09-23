@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { UserAttentionType, appWindow } from '@tauri-apps/api/window';
+</script>
+
 <div class="prose p-5">
 	<h3>Welcome!</h3>
 	<p>
@@ -12,6 +16,7 @@
 </div>
 
 <div class="flex w-full absolute bottom-0 p-5">
-	<button class="btn btn-sm btn-error normal-case">Cancel</button>
+	<button on:click={() => appWindow.close()} class="btn btn-sm btn-error normal-case">Cancel</button
+	>
 	<a href="/locateGame" class="btn btn-sm btn-primary ml-auto normal-case">Let's go!</a>
 </div>
