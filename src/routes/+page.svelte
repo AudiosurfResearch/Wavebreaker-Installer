@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { UserAttentionType, appWindow } from '@tauri-apps/api/window';
+	import { appWindow } from '@tauri-apps/api/window';
 </script>
 
 <div class="prose p-5">

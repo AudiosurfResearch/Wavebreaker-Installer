@@ -21,6 +21,15 @@
 			"window": {
 				"close": true,
 				"requestUserAttention": true
+			},
+			"http": {
+				"all": true,
+				"request": true,
+				"scope": ["https://github.com/*"]
+			},
+			"fs": {
+				"all": true,
+				"scope": ["$TEMP/*", "$TEMP"]
 			}
 		},
 		"bundle": {
