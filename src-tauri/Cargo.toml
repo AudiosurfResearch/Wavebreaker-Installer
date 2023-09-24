@@ -17,7 +17,7 @@ tauri-build = { version = "1.4.0", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.4.0", features = [ "shell-open", "fs-all", "http-all", "window-close", "window-request-user-attention", "shell-execute", "os-all"] }
+tauri = { version = "1.4.0", features = [ "shell-open", "fs-all", "http-all", "window-close", "shell-execute"] }
 winreg = "0.51"
 steamlocate = "2.0.0-alpha.0"
 reqwest = "0.11.20"
@@ -28,3 +28,10 @@ zip-extract = "0.1.2"
 # If you use cargo directly instead of tauri's cli you can use this feature flag to switch between tauri's `dev` and `build` modes.
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
+
+[profile.release]
+panic = "abort" # Strip expensive panic clean-up logic
+codegen-units = 1 # Compile crates one after another so the compiler can optimize better
+lto = true # Enables link to optimizations
+opt-level = "s" # Optimize for binary size
+strip = true # Remove debug symbols

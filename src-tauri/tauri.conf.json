@@ -8,7 +8,7 @@
 	},
 	"package": {
 		"productName": "wavebreaker-installer",
-		"version": "0.1.0"
+		"version": "1.0.0"
 	},
 	"tauri": {
 		"allowlist": {
@@ -16,12 +16,8 @@
 				"execute": true,
 				"open": "^((https?://\\w+)|(steam://\\w+)).+"
 			},
-			"os": {
-				"all": true
-			},
 			"window": {
-				"close": true,
-				"requestUserAttention": true
+				"close": true
 			},
 			"http": {
 				"all": true,
