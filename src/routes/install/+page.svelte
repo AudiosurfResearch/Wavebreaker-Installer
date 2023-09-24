@@ -16,7 +16,10 @@
 	{#await install($gamePath) then}
 		<p class="text-success">Installed!</p>
 	{:catch error}
-		<p class="error">Failed to install: {error}</p>
+		<p class="text-error">
+			Failed to install: {error}<br />
+			Please report this. You may continue anyway, if you'd like, but things will most likely be broken.
+		</p>
 	{/await}
 </div>
 
@@ -26,6 +29,6 @@
 			>Working... <span class="loading loading-spinner loading-xs" /></button
 		>
 	{:else}
-		<a href="/" class="btn btn-sm btn-primary ml-auto normal-case">Finish</a>
+		<a href="/finish" class="btn btn-sm btn-primary ml-auto normal-case">Finish</a>
 	{/if}
 </div>

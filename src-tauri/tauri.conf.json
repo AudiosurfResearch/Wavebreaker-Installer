@@ -13,7 +13,8 @@
 	"tauri": {
 		"allowlist": {
 			"shell": {
-				"execute": true
+				"execute": true,
+				"open": "^((https?://\\w+)|(steam://\\w+)).+"
 			},
 			"os": {
 				"all": true

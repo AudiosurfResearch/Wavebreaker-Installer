@@ -29,7 +29,7 @@ fn main() {
 }
 
 #[tauri::command]
-fn get_audiosurf_path() -> Result<String, String> {
+async fn get_audiosurf_path() -> Result<String, String> {
     let mut steamdir = SteamDir::locate().unwrap();
     let apps: &HashMap<u32, Option<SteamApp>> = steamdir.apps();
     for (_, app) in apps {
