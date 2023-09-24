@@ -2,11 +2,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::Deserialize;
-use std::{collections::HashMap, fs::File, io::copy, path};
+use std::{collections::HashMap, io::Cursor, path};
 use steamlocate::{SteamApp, SteamDir};
-use tempfile::Builder;
 #[derive(Deserialize)]
 struct LibraryFolders(HashMap<String, String>);
+
+trait ResultExt<T> {
+    fn map_to_tauri(self) -> Result<T, String>;
+}
+
+impl<T, E: ToString> ResultExt<T> for Result<T, E> {
+    fn map_to_tauri(self) -> Result<T, String> {
+        self.map_err(|err| err.to_string())
+    }
+}
 
 fn main() {
     tauri::Builder::default()
@@ -47,31 +56,28 @@ async fn install(path: String) -> Result<(), String> {
         return Err("Invalid Audiosurf folder!".into());
     }
 
-    let tmp_dir = Builder::new()
-        .prefix("wavebreaker-installer")
-        .tempdir()
-        .map_err(|err| err.to_string());
     let target = "https://github.com/AudiosurfResearch/Wavebreaker-Hook/releases/latest/download/Wavebreaker-Package.zip";
-    let response = reqwest::get(target).await.map_err(|err| err.to_string())?;
+    let response = reqwest::get(target).await.map_to_tauri()?;
+    let content = response.bytes().await.map_to_tauri()?;
 
-    let mut dest = {
-        let fname = response
-            .url()
-            .path_segments()
-            .and_then(|segments| segments.last())
-            .and_then(|name| if name.is_empty() { None } else { Some(name) })
-            .unwrap_or("tmp.bin");
+    println!("Checking for old files");
+    let old_files = vec![
+        "engine\\channels\\Wavebreaker-Hook.dll",
+        "engine\\channels\\wavebreakerclient.dll",
+        "engine\\SongSelector\\RadioBrowser.cgr",
+        "engine\\Wavebreaker-Hook.ini",
+        "engine\\Wavebreaker-Client.toml",
+    ];
+    for file in old_files {
+        let file_path = path::Path::new(&path).join(file);
+        if file_path.exists() {
+            println!("Removing {}", file);
+            std::fs::remove_file(file_path).map_to_tauri()?;
+        }
+    }
 
-        println!("file to download: '{}'", fname);
-        let fname = tmp_dir.unwrap().path().join(fname);
-        println!("will be located under: '{:?}'", fname);
-        File::create(fname).map_err(|err| err.to_string())?
-    };
-    let content = response.text().await.map_err(|err| err.to_string())?;
-    copy(&mut content.as_bytes(), &mut dest).map_err(|err| err.to_string())?;
-
-    let target_dir = path::Path::new(&path);
-    zip_extract::extract(&dest, &target_dir, true).map_err(|err| err.to_string())?;
+    let target_dir = path::Path::new(&path).join("engine");
+    zip_extract::extract(Cursor::new(content.to_vec()), &target_dir, true).map_to_tauri()?;
 
     return Ok(());
 }
