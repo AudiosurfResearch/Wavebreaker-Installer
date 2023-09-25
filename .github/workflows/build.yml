@@ -51,7 +51,11 @@ jobs:
       - uses: actions/upload-artifact@v3
         name: Upload bundles
         with:
-          path: ${{ github.workspace }}/src-tauri/target/{debug,release}/bundle/{macos,msi,appimage}/*{.app,.msi,.AppImage}
+          name: wavebreaker-installer ${{ matrix.platform }}
+          path: |
+           ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.app
+           ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.msi
+           ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.AppImage
 
       - uses: actions/upload-artifact@v3
         if: matrix.platform == 'windows-latest'
