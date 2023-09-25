@@ -30,11 +30,14 @@ fn main() {
 
 #[tauri::command]
 async fn get_audiosurf_path() -> Result<String, String> {
+    println!("Trying to find Steam...");
     let mut steamdir = SteamDir::locate().unwrap();
+    println!("Steam at {:?}", steamdir.path);
     let apps: &HashMap<u32, Option<SteamApp>> = steamdir.apps();
     for (_, app) in apps {
         if let Some(app) = app {
             if app.app_id == 12900 {
+                println!("Audiosurf found at {:?}", app.path);
                 return Ok(app.path.to_str().unwrap().to_string());
             }
         }

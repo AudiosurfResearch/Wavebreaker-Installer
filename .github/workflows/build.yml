@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,36 +15,54 @@ jobs:
         platform: [macos-latest, ubuntu-20.04, windows-latest]
     runs-on: ${{ matrix.platform }}
 
-
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install dependencies (ubuntu only)
-      if: matrix.platform == 'ubuntu-20.04'
-      # You can remove libayatana-appindicator3-dev if you don't use the system tray feature.
-      run: |
-       sudo apt-get update
-       sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
+      - uses: actions/checkout@v3
 
-    - name: Rust setup
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        # You can remove libayatana-appindicator3-dev if you don't use the system tray feature.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev
 
-    - name: Rust cache
-      uses: swatinem/rust-cache@v2
-      with:
-       workspaces: './src-tauri -> target'
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: Sync node version and setup cache
-      uses: actions/setup-node@v3
-      with:
-       node-version: 'lts/*'
-       cache: 'npm' # Set this to npm, yarn or pnpm.
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
-    - name: Install frontend dependencies
-      # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-      run: npm install # Change this to npm, yarn or pnpm.
-       
-    - name: Build (Tauri)
-      uses: tauri-apps/tauri-action@v0
-      with:
-       includeDebug: true
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/*'
+          cache: 'npm' # Set this to npm, yarn or pnpm.
+
+      - name: Install frontend dependencies
+        # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
+        run: npm install # Change this to npm, yarn or pnpm.
+
+      - name: Build (Tauri)
+        uses: tauri-apps/tauri-action@v0
+        with:
+          includeDebug: true
+
+      - uses: actions/upload-artifact@v3
+        name: Upload bundles
+        with:
+          path: ${{ github.workspace }}/src-tauri/target/{debug,release}/bundle/{macos,msi,appimage}/*{.app,.msi,.AppImage}
+
+      - uses: actions/upload-artifact@v3
+        if: matrix.platform == 'windows-latest'
+        name: Upload Windows standalone (release)
+        with:
+          name: wavebreaker-installer-release.exe
+          path: ${{ github.workspace }}/src-tauri/target/release/wavebreaker-installer.exe
+
+      - uses: actions/upload-artifact@v3
+        if: matrix.platform == 'windows-latest'
+        name: Upload Windows standalone (debug)
+        with:
+          name: wavebreaker-installer-debug.exe
+          path: ${{ github.workspace }}/src-tauri/target/debug/wavebreaker-installer.exe
