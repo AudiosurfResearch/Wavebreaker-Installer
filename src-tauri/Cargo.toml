@@ -18,7 +18,6 @@ tauri-build = { version = "1.4.0", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.4.0", features = [ "shell-open", "fs-all", "http-all", "window-close", "shell-execute"] }
-winreg = "0.51"
 steamlocate = "2.0.0-alpha.0"
 reqwest = "0.11.20"
 zip-extract = "0.1.2"
