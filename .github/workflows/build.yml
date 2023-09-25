@@ -44,5 +44,7 @@ jobs:
       # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
       run: npm install # Change this to npm, yarn or pnpm.
        
-    - name: tauri-build
+    - name: Build (Tauri)
       uses: tauri-apps/tauri-action@v0
+      with:
+       includeDebug: true
