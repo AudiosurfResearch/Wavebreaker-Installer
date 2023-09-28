@@ -50,7 +50,8 @@ async fn get_audiosurf_path() -> Result<String, String> {
 
 #[tauri::command]
 fn is_valid_audiosurf_folder(path: &str) -> bool {
-    return path::Path::new(path).join("engine\\channels").exists();
+    println!("Validating: {:?}", path::Path::new(path));
+    return path::Path::new(path).join("engine").exists();
 }
 
 #[tauri::command]

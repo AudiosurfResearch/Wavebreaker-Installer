@@ -3794,7 +3794,6 @@ dependencies = [
  "steamlocate",
  "tauri",
  "tauri-build",
- "winreg 0.51.0",
  "zip-extract",
 ]
 
