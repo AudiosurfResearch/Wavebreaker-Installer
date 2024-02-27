@@ -68,7 +68,9 @@ async fn install(path: String) -> Result<(), String> {
     let old_files = vec![
         "engine\\channels\\Wavebreaker-Hook.dll",
         "engine\\channels\\wavebreakerclient.dll",
+        "engine\\channels\\wavebreaker_client.dll",
         "engine\\SongSelector\\RadioBrowser.cgr",
+        "engine\\Wavebreaker.toml",
         "engine\\Wavebreaker-Hook.ini",
         "engine\\Wavebreaker-Client.toml",
     ];
@@ -83,5 +85,5 @@ async fn install(path: String) -> Result<(), String> {
     let target_dir = path::Path::new(&path).join("engine");
     zip_extract::extract(Cursor::new(content.to_vec()), &target_dir, true).map_to_tauri()?;
 
-    return Ok(());
+    Ok(())
 }
