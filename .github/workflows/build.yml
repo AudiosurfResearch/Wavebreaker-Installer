@@ -60,23 +60,23 @@ jobs:
         with:
           includeDebug: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         name: Upload bundles
         with:
-          name: wavebreaker-installer ${{ matrix.platform }}
+          name: wavebreaker-installer ${{ matrix.platform }} ${{ matrix.args }}
           path: |
            ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.app
            ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.msi
            ${{ github.workspace }}/src-tauri/target/**/bundle/**/*.AppImage
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         name: Upload Windows standalone (release)
         with:
           name: wavebreaker-installer-release.exe
           path: ${{ github.workspace }}/src-tauri/target/release/wavebreaker-installer.exe
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: matrix.platform == 'windows-latest'
         name: Upload Windows standalone (debug)
         with:
