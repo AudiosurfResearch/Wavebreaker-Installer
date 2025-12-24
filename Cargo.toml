@@ -1,6 +1,24 @@
 [package]
 name = "wavebreaker_installer"
-version = "0.1.0"
+version = "2.0.0"
+description = "Installer for Wavebreaker, now with 100% less web views"
 edition = "2024"
+repository = "https://github.com/AudiosurfResearch/Wavebreaker-Installer"
 
 [dependencies]
+eframe = { version = "0.33.3", features = ["default"] }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+steamlocate = "2.0.1"
+reqwest = "0.11.20"
+zip-extract = "0.1.2"
+tracing = "0.1.44"
+tracing-subscriber = "0.3.22"
+catppuccin-egui = { version = "5.7.0", default-features = false, features = ["egui33"] }
+
+[profile.release]
+panic = "abort" # Strip expensive panic clean-up logic
+codegen-units = 1 # Compile crates one after another so the compiler can optimize better
+lto = true # Enables link to optimizations
+opt-level = "s" # Optimize for binary size
+strip = true # Remove debug symbols
