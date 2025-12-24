@@ -1,7 +1,5 @@
 # Wavebreaker Installer
-Installer for the Wavebreaker client made with Tauri.
+Installer for the Wavebreaker client, now made with [eframe](https://github.com/emilk/egui/tree/main/crates/eframe).
 
 # Usage
-Download the .exe file from [the latest release](https://github.com/AudiosurfResearch/Wavebreaker-Installer/releases/latest) and run it, the rest is self-explanatory.
-
-If it breaks, you're probably missing WebView2. [Download it from Microsoft.](https://go.microsoft.com/fwlink/p/?LinkId=2124703)
+Download the file for your OS from [the latest release](https://github.com/AudiosurfResearch/Wavebreaker-Installer/releases/latest) and run it, the rest is self-explanatory.
