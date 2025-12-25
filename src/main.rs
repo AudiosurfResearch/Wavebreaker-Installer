@@ -316,10 +316,10 @@ impl eframe::App for EguiApp {
                             ui.label(
                                 RichText::new("Congratulations, you're all set! You can now launch the game!").color(WAVEBREAKER_THEME.green),
                             );
-                            if cfg!(unix) {
-                                ui.label("Since you're on Linux or macOS, you may need to set Steam to use Proton 8 for Audiosurf if you run into problems with Wavebreaker.");
-                            }
                             ui.add_space(8.);
+                            if cfg!(unix) {
+                                ui.label(RichText::new("Since you're on Linux or macOS, you may need to set Steam to use Proton/Wine 8 for Audiosurf if you run into problems with Wavebreaker.").color(WAVEBREAKER_THEME.yellow));
+                            }
                             ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
                                 if ui
                                     .add_sized([64., 32.], Button::new(RichText::new("Launch")))

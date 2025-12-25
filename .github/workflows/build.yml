@@ -1,8 +1,12 @@
-name: Build
+name: Build artifacts
 
 on:
   push:
-    branches: ['main']
+    branches: ["next"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,14 +17,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
-            args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: ''
-          - platform: 'windows-latest'
-            args: ''
+          # macOS
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            profile: debug
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            profile: release
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            profile: debug
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            profile: release
+
+          # Linux
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            profile: debug
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            profile: release
+
+          # Windows
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            profile: debug
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            profile: release
+
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -29,17 +55,17 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.os == 'macos-latest' && matrix.target || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}-${{ matrix.profile }}
 
-#      - uses: actions/upload-artifact@v4
-#        name: Upload bundles
-#        with:
-#          name: wavebreaker-installer ${{ matrix.platform }} ${{ matrix.args }}
-#          path: |
-#           ${{ github.workspace }}/target/**/bundle/**/*.app
-#           ${{ github.workspace }}/target/**/bundle/**/*.msi
-#           ${{ github.workspace }}/target/**/bundle/**/*.AppImage
+      - run: cargo build --target ${{ matrix.target }} ${{ matrix.profile == 'release' && '--release' || '' }}
+
+      - uses: actions/upload-artifact@v4
+        name: Upload bundles
+        with:
+          name: wavebreaker-${{ matrix.target }}-${{ matrix.profile }}
+          path: target/${{ matrix.target }}/${{ matrix.profile }}/wavebreaker_installer*
