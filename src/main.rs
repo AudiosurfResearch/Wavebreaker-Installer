@@ -6,12 +6,13 @@ use anyhow::{self, Context, bail};
 use catppuccin_egui::{MACCHIATO, Theme};
 use eframe::egui::{
     self, Button, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId,
-    InnerResponse, Layout, Margin, Response, RichText, Stroke, TextStyle, Ui, Vec2,
-    ViewportBuilder,
+    InnerResponse, Layout, Margin, ProgressBar, Response, RichText, Stroke, TextEdit, TextStyle,
+    Ui, Vec2, ViewportBuilder, ViewportCommand,
 };
 use egui_extras::install_image_loaders;
 use lazy_async_promise::{
-    BoxedSendError, ImmediateValuePromise, Progress, ProgressTrackedImValProm, StringStatus,
+    BoxedSendError, ImmediateValuePromise, ImmediateValueState, Progress, ProgressTrackedImValProm,
+    StringStatus,
 };
 use steamlocate::{Library, SteamDir};
 use tracing::{info, instrument};
@@ -46,11 +47,12 @@ fn get_audiosurf_path() -> anyhow::Result<String> {
 
 #[instrument]
 fn is_valid_audiosurf_folder(path: &str) -> bool {
-    println!("Validating: {:?}", path::Path::new(path));
+    info!("Validating: {:?}", path::Path::new(path));
     return path::Path::new(path).join("engine").exists();
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tracing_subscriber::fmt::init();
 
     let mut native_options = eframe::NativeOptions::default();
@@ -73,12 +75,13 @@ enum InstallationStep {
         autolocation_ran: bool,
         audiosurf_path: Option<String>,
     },
+    Installing,
 }
 
 #[derive(Default)]
 struct EguiApp {
     current_step: InstallationStep,
-    install_task: Option<ProgressTrackedImValProm<(), anyhow::Error>>,
+    install_task: Option<ProgressTrackedImValProm<(), Cow<'static, str>>>,
     game_path: String,
 }
 
@@ -188,7 +191,7 @@ impl EguiApp {
                     ))
                     .await?;
 
-                    println!("Checking for old files");
+                    info!("Checking for old files");
                     let old_files = vec![
                         "engine\\channels\\Wavebreaker-Hook.dll",
                         "engine\\channels\\wavebreakerclient.dll",
@@ -201,7 +204,7 @@ impl EguiApp {
                     for file in old_files {
                         let file_path = path::Path::new(&path).join(file);
                         if file_path.exists() {
-                            println!("Removing {}", file);
+                            info!("Removing {}", file);
                             std::fs::remove_file(file_path)
                                 .context("Failed to remove old files")
                                 .map_err(|e| BoxedSendError(e.into()))?;
@@ -279,18 +282,70 @@ impl eframe::App for EguiApp {
                             ui.label(RichText::new("Game folder was found automatically!").color(WAVEBREAKER_THEME.green));
                         }
                         None => {
-                            ui.label(RichText::new(format!("Failed to locate game folder!")).color(WAVEBREAKER_THEME.red));
+                            ui.label(RichText::new("Failed to locate game folder!").color(WAVEBREAKER_THEME.red));
                         }
                     }
-                    let text_edit_response = ui.text_edit_singleline(&mut self.game_path);
+                    ui.add_space(8.);
+                    ui.add(TextEdit::singleline(&mut self.game_path).text_color(WAVEBREAKER_THEME.text).margin(Margin::same(12)));
                     ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
                         if ui
                             .add_sized([64., 32.], Button::new(RichText::new("Install")))
                             .clicked()
                         {
-                            self.current_step = InstallationStep::LocateGame { autolocation_ran: false, audiosurf_path: get_audiosurf_path().ok() };
+                            self.current_step = InstallationStep::Installing;
+                            self.install_task = Some(Self::install(self.game_path.clone()));
                         }
                     });
+                }
+                InstallationStep::Installing => {
+                    let state = self.install_task.get_or_insert_with(|| {Self::install(self.game_path.clone())});
+                    let state2 = state.poll_state();
+                    match state2 {
+                        ImmediateValueState::Updating => {
+                            if let Some(status) = state.last_status() {
+                                ui.label(RichText::new(status.message.clone()));
+                                ui.add(
+                                    ProgressBar::new(status.progress.as_f32()).fill(WAVEBREAKER_THEME.sky).desired_height(12.0),
+                                );
+                                ctx.request_repaint(); // constantly requests UI to be redrawn, so the progress bar updates without user interaction
+                            } else {
+                                ui.label("Preparing for update...");
+                            }
+                        }
+                        ImmediateValueState::Success(_) => {
+                            ui.label(
+                                RichText::new("Congratulations, you're all set! You can now launch the game!").color(WAVEBREAKER_THEME.green),
+                            );
+                            if cfg!(unix) {
+                                ui.label("Since you're on Linux or macOS, you may need to set Steam to use Proton 8 for Audiosurf if you run into problems with Wavebreaker.");
+                            }
+                            ui.add_space(8.);
+                            ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
+                                if ui
+                                    .add_sized([64., 32.], Button::new(RichText::new("Launch")))
+                                    .clicked()
+                                {
+                                    ctx.send_viewport_cmd(ViewportCommand::Close);
+                                    open::that("steam://rungameid/12900").unwrap();
+                                }
+                            });
+                        }
+                        ImmediateValueState::Error(err) => {
+                            ui.label(
+                                RichText::new(format!("Something went wrong: {}", err.to_string()))
+                                    .color(WAVEBREAKER_THEME.red),
+                            );
+                            ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
+                                if ui
+                                    .add_sized([64., 32.], Button::new(RichText::new("Exit")))
+                                    .clicked()
+                                {
+                                    ctx.send_viewport_cmd(ViewportCommand::Close);
+                                }
+                            });
+                        }
+                        _ => {}
+                    }
                 }
             }
         });
