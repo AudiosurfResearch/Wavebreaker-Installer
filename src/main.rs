@@ -5,7 +5,7 @@ use std::{borrow::Cow, collections::BTreeMap, io::Cursor, path};
 use anyhow::{self, Context, bail};
 use catppuccin_egui::{MACCHIATO, Theme};
 use eframe::egui::{
-    self, Button, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId,
+    self, Button, Color32, CornerRadius, FontData, FontDefinitions, FontFamily, FontId, IconData,
     InnerResponse, Layout, Margin, ProgressBar, Response, RichText, Stroke, TextEdit, TextStyle,
     Ui, Vec2, ViewportBuilder, ViewportCommand,
 };
@@ -58,7 +58,9 @@ async fn main() {
     let mut native_options = eframe::NativeOptions::default();
     native_options.viewport = ViewportBuilder::default()
         .with_resizable(false)
-        .with_inner_size(Vec2::new(640., 300.));
+        .with_inner_size(Vec2::new(640., 300.))
+        .with_maximize_button(false)
+        .with_icon(IconData::default());
     eframe::run_native(
         "Wavebreaker Installer",
         native_options,
@@ -110,7 +112,6 @@ impl EguiApp {
             style.visuals.widgets.inactive.fg_stroke.color = Color32::WHITE;
 
             style.visuals.widgets.active.expansion = -0.3;
-
             style.spacing.window_margin = Margin::same(20);
         });
 
@@ -247,7 +248,10 @@ fn header_bar(ui: &mut Ui) -> InnerResponse<Response> {
 
 impl eframe::App for EguiApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        let frame = egui::Frame::window(&ctx.style()).inner_margin(Margin::same(16));
+        let frame = egui::Frame::window(&ctx.style())
+            .stroke(Stroke::NONE)
+            .inner_margin(Margin::same(16))
+            .corner_radius(CornerRadius::same(0));
         egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
             header_bar(ui);
             ui.add_space(16.);
@@ -286,7 +290,14 @@ impl eframe::App for EguiApp {
                         }
                     }
                     ui.add_space(8.);
-                    ui.add(TextEdit::singleline(&mut self.game_path).text_color(WAVEBREAKER_THEME.text).margin(Margin::same(12)));
+                    let hint_text;
+                    if cfg!(unix) {
+                        hint_text = "/home/USERNAME/.local/share/Steam/steamapps/common/Audiosurf";
+                    }
+                    else {
+                        hint_text = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Audiosurf"
+                    }
+                    ui.add(TextEdit::singleline(&mut self.game_path).hint_text(hint_text).text_color(WAVEBREAKER_THEME.text).margin(Margin::same(12)));
                     ui.with_layout(Layout::right_to_left(egui::Align::Max), |ui| {
                         if ui
                             .add_sized([64., 32.], Button::new(RichText::new("Install")))
